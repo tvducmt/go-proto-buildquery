@@ -71,7 +71,9 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`query := elastic.NewBoolQuery()`)
 	b.In()
 	for _, field := range message.Field {
+		b.P(`field`, field.GetName())
 		fieldQeurier := getOneofQueryIfAny(field)
+		b.P(`fieldQeurier`, fieldQeurier)
 		if fieldQeurier == nil {
 			continue
 		}
