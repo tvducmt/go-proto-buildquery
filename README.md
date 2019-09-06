@@ -1,1 +1,0 @@
-# go-proto-buildquery
