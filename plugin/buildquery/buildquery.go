@@ -49,15 +49,14 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 			continue
 		}
 		// b.generateRegexVars(file, msg)
-		if gogoproto.IsProto3(file.FileDescriptorProto) {
-			b.generateProto3Message(file, msg)
-		}
+		//if gogoproto.IsProto3(file.FileDescriptorProto) {
+		b.generateProto3Message(file, msg)
+		//}
 	}
 }
 
 func (b *buildquery) getFieldQueryIfAny(field *descriptor.FieldDescriptorProto) *querier.FieldQuery {
 	if field.Options != nil {
-		// b.P(`field.Options`, field.Options.ExtensionRangeArray())
 		v, err := proto.GetExtension(field, querier.E_Field)
 		if err == nil && v.(*querier.FieldQuery) != nil {
 			b.P(`querier.FieldQuery`)
