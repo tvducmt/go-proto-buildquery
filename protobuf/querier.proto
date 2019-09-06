@@ -4,6 +4,7 @@ package querier;
 
 import "google/protobuf/descriptor.proto";
 
+option go_package = "querier";
 
 extend google.protobuf.FieldOptions {
     FieldQuery field = 65020;
