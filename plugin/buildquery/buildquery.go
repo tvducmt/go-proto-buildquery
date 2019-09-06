@@ -55,10 +55,12 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	}
 }
 
-func getOneofQueryIfAny(field *descriptor.FieldDescriptorProto) *querier.FieldQuery {
+func (b *buildquery) getOneofQueryIfAny(field *descriptor.FieldDescriptorProto) *querier.FieldQuery {
 	if field.Options != nil {
+		b.P(`field.Options`)
 		v, err := proto.GetExtension(field.Options, querier.E_Field)
 		if err == nil && v.(*querier.FieldQuery) != nil {
+			b.P(`querier.FieldQuery`)
 			return (v.(*querier.FieldQuery))
 		}
 	}
@@ -72,7 +74,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.In()
 	for _, field := range message.Field {
 		b.P(`field`, field.GetName())
-		fieldQeurier := getOneofQueryIfAny(field)
+		fieldQeurier := b.getOneofQueryIfAny(field)
 		b.P(`fieldQeurier`, fieldQeurier.GetQuery())
 		if fieldQeurier == nil {
 			continue
