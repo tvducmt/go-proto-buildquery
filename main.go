@@ -3,7 +3,6 @@ package main
 import (
 	"io/ioutil"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/gogo/protobuf/proto"
@@ -27,7 +26,6 @@ func main() {
 		gen.Fail("no files to generate")
 	}
 
-	useGogoImport := false
 	// Match parsing algorithm from Generator.CommandLineParameters
 	for _, parameter := range strings.Split(gen.Request.GetParameter(), ",") {
 		kvp := strings.SplitN(parameter, "=", 2)
@@ -35,10 +33,7 @@ func main() {
 		if len(kvp) != 2 || kvp[0] != "gogoimport" {
 			continue
 		}
-		useGogoImport, err = strconv.ParseBool(kvp[1])
-		if err != nil {
-			gen.Error(err, "parsing gogoimport option")
-		}
+
 	}
 
 	gen.CommandLineParameters(gen.Request.GetParameter())
