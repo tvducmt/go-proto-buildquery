@@ -77,17 +77,18 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		}
 		fieldName := b.GetOneOfFieldName(message, field)
 		variableName := "this." + fieldName
-
-		if field.IsString() {
-			b.generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
-		}
+		b.P(`fieldName`, fieldName)
+		b.P(`field.IsString()`, field.IsString())
+		//if field.IsString() {
+		b.generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
+		// }
 	}
 	b.P(`return query`)
 	b.Out()
 	b.P(`}`)
 }
 func (b *buildquery) generateStringQuerier(variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
-
+	b.P(`fv.GetQuery() `, fv.GetQuery())
 	switch fv.GetQuery() {
 	case "mt":
 		b.Out()
