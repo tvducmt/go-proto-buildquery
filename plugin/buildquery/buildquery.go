@@ -73,7 +73,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	for _, field := range message.Field {
 		b.P(`field`, field.GetName())
 		fieldQeurier := getOneofQueryIfAny(field)
-		b.P(`fieldQeurier`, fieldQeurier)
+		b.P(`fieldQeurier`, fieldQeurier.GetQuery())
 		if fieldQeurier == nil {
 			continue
 		}
