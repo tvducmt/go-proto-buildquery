@@ -57,7 +57,7 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 
 func (b *buildquery) getFieldQueryIfAny(field *descriptor.FieldDescriptorProto) *querier.FieldQuery {
 	if field.Options != nil {
-		b.P(`field.Options`, field.Options.ExtensionRangeArray())
+		// b.P(`field.Options`, field.Options.ExtensionRangeArray())
 		v, err := proto.GetExtension(field, querier.E_Field)
 		if err == nil && v.(*querier.FieldQuery) != nil {
 			b.P(`querier.FieldQuery`)
