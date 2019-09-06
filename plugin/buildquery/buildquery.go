@@ -2,9 +2,9 @@ package buildquery
 
 import (
 	"github.com/gogo/protobuf/gogoproto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
-	"github.com/golang/protobuf/proto"
 	querier "github.com/tvducmt/protoc-gen-buildquery/protobuf"
 )
 
@@ -55,10 +55,10 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	}
 }
 
-func (b *buildquery) getOneofQueryIfAny(field *descriptor.FieldDescriptorProto) *querier.FieldQuery {
+func (b *buildquery) getFieldQueryIfAny(field *descriptor.FieldDescriptorProto) *querier.FieldQuery {
 	if field.Options != nil {
-		b.P(`field.Options`)
-		v, err := proto.GetExtension(field.Options, querier.E_Field)
+		b.P(`field.Options`, field.Options.ExtensionRangeArray())
+		v, err := proto.GetExtension(field, querier.E_Field)
 		if err == nil && v.(*querier.FieldQuery) != nil {
 			b.P(`querier.FieldQuery`)
 			return (v.(*querier.FieldQuery))
@@ -76,7 +76,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.In()
 	for _, field := range message.Field {
 		b.P(`field`, field.GetName())
-		fieldQeurier := b.getOneofQueryIfAny(field)
+		fieldQeurier := b.getFieldQueryIfAny(field)
 		b.P(`fieldQeurier`, fieldQeurier.GetQuery())
 		if fieldQeurier == nil {
 			continue

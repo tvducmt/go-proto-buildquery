@@ -10,6 +10,6 @@ extend google.protobuf.FieldOptions {
     FieldQuery field = 65020;
   }
 
-  message FieldQuery {
-      string query = 1;
-  }
+message FieldQuery {
+    string query = 1;
+}
