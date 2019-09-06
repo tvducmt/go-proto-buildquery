@@ -49,9 +49,9 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 			continue
 		}
 		// b.generateRegexVars(file, msg)
-		if gogoproto.IsProto3(file.FileDescriptorProto) {
-			b.generateProto3Message(file, msg)
-		}
+		// if gogoproto.IsProto3(file.FileDescriptorProto) {
+		b.generateProto3Message(file, msg)
+		// }
 	}
 }
 
