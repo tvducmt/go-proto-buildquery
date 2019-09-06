@@ -5,4 +5,4 @@ protoc -I/usr/local/include -I. \
   -I${GOPATH}/src/github.com/tvducmt/go-proto-buildquery \
   --go_out=plugins=grpc:. --grpc-gateway_out=logtostderr=true:. \
   --buildquery_out="lang=go:." \
-  *.proto 
+  test/example.proto
