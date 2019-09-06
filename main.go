@@ -44,7 +44,7 @@ func main() {
 	gen.GeneratePlugin(buildquery_plugin.NewBuildquery())
 
 	for i := 0; i < len(gen.Response.File); i++ {
-		gen.Response.File[i].Name = proto.String(strings.Replace(*gen.Response.File[i].Name, ".pb.go", ".validator.pb.go", -1))
+		gen.Response.File[i].Name = proto.String(strings.Replace(*gen.Response.File[i].Name, ".pb.go", ".querier.pb.go", -1))
 	}
 
 	// Send back the results.
