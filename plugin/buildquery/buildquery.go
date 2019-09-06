@@ -63,6 +63,8 @@ func (b *buildquery) getOneofQueryIfAny(field *descriptor.FieldDescriptorProto) 
 			b.P(`querier.FieldQuery`)
 			return (v.(*querier.FieldQuery))
 		}
+		b.P(`field.OptionsError`, err.Error())
+
 	}
 	return nil
 }
