@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package test;
-
-
-message ListAppFeesRequest{
-    string transID = 1;
-}

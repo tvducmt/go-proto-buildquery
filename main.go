@@ -7,7 +7,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
-	buildquery_plugin "github.com/tvducmt/go-proto-buildquery/plugin/buildquery"
+	buildquery_plugin "github.com/tvducmt/proto-gen-buildquery/plugin/buildquery"
 )
 
 func main() {
