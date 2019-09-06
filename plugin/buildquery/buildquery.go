@@ -5,7 +5,7 @@ import (
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
 	"github.com/golang/protobuf/proto"
-	querier "github.com/tvducmt/proto-gen-buildquery"
+	querier "github.com/tvducmt/proto-gen-buildquery/protobuf"
 )
 
 type buildquery struct {
