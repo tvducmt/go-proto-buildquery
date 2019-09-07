@@ -160,7 +160,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		}
 		fieldName := b.GetOneOfFieldName(message, field)
 		variableName := "this." + fieldName
-		b.P(`fmt.Println("variableName", ` + variableName + `)`)
+		// b.P(`fmt.Println("variableName", ` + variableName + `)`)
 		if variableName != "" {
 			b.generateQuerier(once2, variableName, ccTypeName, fieldName, fieldQeurier)
 		}
@@ -180,6 +180,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 	}
 	switch fv.GetQuery() {
 	case "*%*":
+		b.P(`if ` + variableName + ` != ""{`)
 		b.P(`bHasSearchPrefix = true`)
 		b.P(`if !disableRangeFilter && len(fmt.Sprintf("%v",` + variableName + `)) >= 8 {`)
 		b.P(`disableRangeFilter = true`)
@@ -189,26 +190,37 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`}`)
 		b.P(`query = query.Must(elastic.NewMultiMatchQuery(`)
 		b.P(variableName + `, "` + fieldName + `.search", "` + fieldName + `.search_reverse").MaxExpansions(1024).Slop(2).Type("phrase_prefix"))`)
+		b.P(`}`)
 	case "*%":
+		b.P(`if ` + variableName + ` != ""{`)
 		b.P(`query = query.Must(elastic.NewMatchPhrasePrefixQuery(`)
 		b.P(`fmt.Sprintf("%s.search", ` + fieldName + `),`)
 		b.P(variableName + `,).MaxExpansions(1024).Slop(2))`)
+		b.P(`}`)
 	case "%*":
+		b.P(`if ` + variableName + ` != ""{`)
 		b.P(`query = query.Must(elastic.NewMatchPhrasePrefixQuery(`)
 		b.P(`fmt.Sprintf("%s.search_reverse", ` + fieldName + `,`)
 		b.P(variableName + `,).MaxExpansions(1024).Slop(2))`)
-
+		b.P(`}`)
 	case "*.*": //Wildcard
+		b.P(`if ` + variableName + ` != ""{`)
 		b.P(`s := fmt.Sprintf("%v", ` + variableName + `)`)
 		b.P(`if !strings.Contains(s, "*") {`)
 		b.P(`	s = "*" + s + "*"`)
 		b.P(`}`)
 		b.P(`query = query.Must(elastic.NewWildcardQuery(` + fieldName + `, s))`)
+		b.P(`}`)
 	case "*.": //Wildcard
+		b.P(`if ` + variableName + ` != ""{`)
 		b.P(`query = query.Must(elastic.NewWildcardQuery(` + fieldName + `, fmt.Sprintf("*%v", ` + variableName + `)))`)
+		b.P(`}`)
 	case ".*": //Wildcard
+		b.P(`if ` + variableName + ` != ""{`)
 		b.P(`query = query.Must(elastic.NewWildcardQuery(` + fieldName + `, fmt.Sprintf("%v*", ` + variableName + `)))`)
+		b.P(`}`)
 	case "=": //Term
+		b.P(`if ` + variableName + ` != nil{`)
 		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
 		b.P(`query = query.Filter(elastic.NewTermsQuery("` + fieldName + `",` + variableName + `))`)
 		b.P(`} else if isEnumAll(`, variableName, `) {`)
@@ -217,13 +229,16 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`comp := convertDateTimeSearch(` + variableName + `,"=")`)
 		b.P(`query = query.Filter(elastic.NewTermQuery("` + fieldName + `",comp))`)
 		b.P(`}`)
+		b.P(`}`)
 	case "mt":
 		b.P(`if ` + variableName + ` != ""{`)
 		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `",` + variableName + `))`)
 		b.P(`}`)
 		// query = query.Must(elastic.NewMatchQuery(params[0], vv))
 	case "match":
+		b.P(`if ` + variableName + ` != ""{`)
 		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `.search",` + variableName + `).MinimumShouldMatch("3<90%"))`)
+		b.P(`}`)
 	case ">=":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
 		once.Do(rangeQueryDeclar)
