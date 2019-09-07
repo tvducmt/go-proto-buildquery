@@ -46,6 +46,20 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	}
 	b.querierPkg = b.NewImport("github.com/tvducmt/go-proto-buildquery")
 
+	b.P(`func convertDateTimeSearch(vv interface{}, op string) interface{} {`)
+	b.P(`if date, ok := vv.(*proto.Date); ok {`)
+	b.P(`switch op {`)
+	b.P(`case "<":`)
+	b.P(`return proto.DateUpperToTimeSearch(date).UnixNano() / int64(time.Millisecond)`)
+	b.P(`default:`)
+	b.P(`return proto.DateToTimeSearch(date).UnixNano() / int64(time.Millisecond)`)
+
+	b.P(`}`)
+	b.P(`}`)
+	b.P(`return vv`)
+
+	b.P(`}`)
+
 	for _, msg := range file.Messages() {
 		if msg.DescriptorProto.GetOptions().GetMapEntry() {
 			continue
@@ -79,6 +93,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 			continue
 		}
 		fieldName := b.GetOneOfFieldName(message, field)
+		b.P(`var `, fieldName, `string`)
 		variableName := "this." + fieldName
 		b.generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
 		// }
@@ -102,9 +117,9 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 	switch fv.GetQuery() {
 	case "=": //Term
 		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
-		b.P(`query = query.Filter(elastic.NewTermsQuery(`, fieldName, `, DoubleSlice(vv)...))`)
+		b.P(`query = query.Filter(elastic.NewTermsQuery(` + fieldName + `,` + variableName + `))`)
 		b.P(`} else {`)
-		// comp := convertDateTimeSearch(vv, params[1])
+		b.P(`comp := convertDateTimeSearch(vv, params[1])`)
 		b.P(`query = query.Filter(elastic.NewTermQuery(` + string(fieldName) + `,comp))`)
 		b.P(`}`)
 	case "mt":
