@@ -82,6 +82,10 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`mapRangeDateSearch map[string]*rangeDateSearch`)
 	b.P(`}`)
 
+	b.P(`func dateToStringSearch(date *`, b.protoPkg.Use(), `.Date) string {`)
+	b.P(`return fmt.Sprintf("%04d-%02d-%02d", date.GetYear(), date.GetMonth(), date.GetDay())`)
+	b.P(`}`)
+
 	b.P(`type rangeDateSearch struct {`)
 	b.P(`from, to *`, b.protoPkg.Use(), `.Date`)
 	b.P(`}`)
@@ -165,7 +169,7 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 	switch fv.GetQuery() {
 	case "*%*":
 		b.P(`bHasSearchPrefix = true`)
-		b.P(`if !disableRangeFilter && len(fmt.Sprintf("%v", ,` + variableName + `,)) >= 8 {`)
+		b.P(`if !disableRangeFilter && len(fmt.Sprintf("%v",` + variableName + `)) >= 8 {`)
 		b.P(`disableRangeFilter = true`)
 		b.P(`}`)
 		b.P(`if ` + fieldName + ` == "userInfo.phoneNumber" {`)
@@ -219,5 +223,22 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 	default:
 		b.P(`glog.Warningln("Unknow ", params[1])`)
 	}
+
+	b.P(`if !disableRangeFilter || searchPhone {`)
+	b.P(`for k, v := range rangeDateSearch.mapRangeDateSearch {`)
+	b.P(`glog.Infoln(k, v)`)
+	b.P(`f, t := v.from, v.to`)
+	b.P(`if f != nil && t != nil {`)
+	b.P(`if !searchPhone && bHasSearchPrefix && f.Day+7 > t.Day && f.Month == t.Month && f.Year == t.Year {`)
+	b.P(`tm := time.Date(int(f.Year), time.Month(f.Month), int(f.Day), 0, 0, 0, 0, time.UTC).Add(-7 * 24 * time.Hour)`)
+	b.P(`f.Year, f.Month, f.Day = int32(tm.Year()), int32(tm.Month()), int32(tm.Day())`)
+	b.P(`}`)
+	b.P(`query = query.Filter(elastic.NewRangeQuery(k).Gte(dateToStringSearch(f)).Lte(dateToStringSearch(t)).TimeZone("+07:00"))`)
+	b.P(`} else {`)
+	b.P(`glog.Errorln("Invalid ", k)`)
+	b.P(`}`)
+
+	b.P(`}`)
+	b.P(`}`)
 
 }
