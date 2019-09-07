@@ -53,11 +53,9 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`return proto.DateUpperToTimeSearch(date).UnixNano() / int64(time.Millisecond)`)
 	b.P(`default:`)
 	b.P(`return proto.DateToTimeSearch(date).UnixNano() / int64(time.Millisecond)`)
-
 	b.P(`}`)
 	b.P(`}`)
 	b.P(`return vv`)
-
 	b.P(`}`)
 
 	for _, msg := range file.Messages() {
