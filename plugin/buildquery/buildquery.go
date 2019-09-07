@@ -170,7 +170,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 func (b *buildquery) generateStringQuerier(once *sync.Once, variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
 	rangeQueryDeclar := func() {
 		b.P(`r := &rangeQuery{`)
-		b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
+		b.P(`mapQuery: map[string]*`, b.elasticPkg.Use(), `.RangeQuery{},`)
 		b.P(`}`)
 
 	}
