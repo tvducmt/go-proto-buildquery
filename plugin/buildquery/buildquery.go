@@ -172,12 +172,30 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 		b.P(`if !disableRangeFilter && len(fmt.Sprintf("%v",` + variableName + `)) >= 8 {`)
 		b.P(`disableRangeFilter = true`)
 		b.P(`}`)
-		b.P(`if ` + fieldName + ` == "userInfo.phoneNumber" {`)
+		b.P(`if "` + fieldName + `" == "userInfo.phoneNumber" {`)
 		b.P(`searchPhone = true`)
 		b.P(`}`)
 		b.P(`query = query.Must(elastic.NewMultiMatchQuery(`)
 		b.P(variableName + `, "` + fieldName + `.search", "` + fieldName + `.search_reverse").MaxExpansions(1024).Slop(2).Type("phrase_prefix"))`)
+	case "*%":
+		b.P(`query = query.Must(elastic.NewMatchPhrasePrefixQuery(`)
+		b.P(`fmt.Sprintf("%s.search", ` + fieldName + `),`)
+		b.P(variableName + `,).MaxExpansions(1024).Slop(2))`)
+	case "%*":
+		b.P(`query = query.Must(elastic.NewMatchPhrasePrefixQuery(`)
+		b.P(`fmt.Sprintf("%s.search_reverse", ` + fieldName + `,`)
+		b.P(variableName + `,).MaxExpansions(1024).Slop(2))`)
 
+	case "*.*": //Wildcard
+		b.P(`s := fmt.Sprintf("%v", ` + variableName + `)`)
+		b.P(`if !strings.Contains(s, "*") {`)
+		b.P(`	s = "*" + s + "*"`)
+		b.P(`}`)
+		b.P(`query = query.Must(elastic.NewWildcardQuery(` + fieldName + `, s))`)
+	case "*.": //Wildcard
+		b.P(`query = query.Must(elastic.NewWildcardQuery(` + fieldName + `, fmt.Sprintf("*%v", ` + variableName + `)))`)
+	case ".*": //Wildcard
+		b.P(`query = query.Must(elastic.NewWildcardQuery(` + fieldName + `, fmt.Sprintf("%v*", ` + variableName + `)))`)
 	case "=": //Term
 		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
 		b.P(`query = query.Filter(elastic.NewTermsQuery("` + fieldName + `",` + variableName + `))`)
