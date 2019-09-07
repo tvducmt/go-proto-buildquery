@@ -218,7 +218,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`query = query.Filter(elastic.NewTermQuery("` + fieldName + `",comp))`)
 		b.P(`}`)
 	case "mt":
-		b.P(`if variableName != ""{`)
+		b.P(`if ` + variableName + ` != ""{`)
 		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `",` + variableName + `))`)
 		b.P(`}`)
 		// query = query.Must(elastic.NewMatchQuery(params[0], vv))
