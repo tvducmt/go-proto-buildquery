@@ -1,8 +1,6 @@
 package buildquery
 
 import (
-	"fmt"
-
 	"github.com/gogo/protobuf/gogoproto"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
@@ -74,7 +72,6 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.In()
 	for _, field := range message.Field {
 		fieldQeurier := b.getFieldQueryIfAny(field)
-		fmt.Println("fieldQeurier", fieldQeurier)
 		if fieldQeurier == nil {
 			continue
 		}
