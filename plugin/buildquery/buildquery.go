@@ -15,6 +15,7 @@ type buildquery struct {
 	querierPkg generator.Single
 	fmtPkg     generator.Single
 	protoPkg   generator.Single
+	elasticPkg generator.Single
 	// query *elastic.BoolQuery
 }
 
@@ -40,6 +41,7 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.fmtPkg = b.NewImport("fmt")
 	// stringsPkg := b.NewImport("strings")
 	b.protoPkg = b.NewImport("git.zapa.cloud/merchant-tools/helper/proto")
+	b.elasticPkg = b.NewImport("git.zapa.cloud/merchant-tools/helper/search/elastic")
 	// if !gogoproto.ImportsGoGoProto(file.FileDescriptorProto) {
 	// 	b.protoPkg = b.NewImport("github.com/golang/protobuf/proto")
 	// }
@@ -68,7 +70,7 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`}`)
 
 	b.P(`type rangeQuery struct {`)
-	b.P(`mapQuery map[string]*elastic.RangeQuery`)
+	b.P(`mapQuery map[string]*`, b.elasticPkg.Use(), `.RangeQuery`)
 	b.P(`}`)
 
 	b.P(`func (r *rangeQuery) NewRangeQuery(name string) *elastic.RangeQuery {`)
