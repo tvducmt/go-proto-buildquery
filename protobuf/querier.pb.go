@@ -8,7 +8,7 @@ import (
 	math "math"
 
 	proto "github.com/gogo/protobuf/proto"
-	descriptor "github.com/gogog/protobuf/protoc-gen-gogo/descriptor"
+	descriptor "github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
