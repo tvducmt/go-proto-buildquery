@@ -74,10 +74,12 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`query := elastic.NewBoolQuery()`)
 	b.In()
 	for _, field := range message.Field {
-		m := b.GoMapType(nil, field)
-		keyField := m.KeyField
-		keygoTyp, _ := b.GoType(nil, keyField)
-		b.P(`keygoTyp`, keygoTyp)
+		if field.IsMessage() {
+			b.P(`IsMessage`)
+		}
+		desc := b.ObjectNamed(field.GetTypeName())
+		msgname := b.TypeName(desc)
+		b.P(`msgname`, msgname)
 		// b.P(`keyField`, keyField)
 		// b.P(`keyAliasField`, keyAliasField)
 		// b.P(`field`, field.GetName())
