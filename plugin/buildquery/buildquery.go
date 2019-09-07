@@ -98,6 +98,18 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`return false`)
 	b.P(`}`)
 
+	b.P(`func (r *mapRangeDateSearch) addTo(name string, vv interface{}) bool {`)
+	b.P(`if to, ok := vv.(*`, b.protoPkg.Use(), `.Date); ok {`)
+	b.P(`if q, ok := r.mapRangeDateSearch[name]; ok {`)
+	b.P(`q.to = to`)
+	b.P(`} else {`)
+	b.P(`r.mapRangeDateSearch[name] = &rangeDateSearch{to: to}`)
+	b.P(`	}`)
+	b.P(`return true`)
+	b.P(`}`)
+	b.P(`return false`)
+	b.P(`}`)
+
 	for _, msg := range file.Messages() {
 		if msg.DescriptorProto.GetOptions().GetMapEntry() {
 			continue
@@ -171,7 +183,7 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 	case "<=":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
 		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
-		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `".Lte(` + variableName + `))`)
+		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Lte(` + variableName + `))`)
 		b.P(`}`)
 	case ">":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
