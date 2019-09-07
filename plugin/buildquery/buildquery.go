@@ -142,6 +142,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	ccTypeName := generator.CamelCaseSlice(message.TypeName())
 	b.P(`func (this *`, ccTypeName, `) BuildQuery() *elastic.BoolQuery {`)
 	b.In()
+	b.P(`flag.Parse()`)
 	b.P(`query := elastic.NewBoolQuery()`)
 	b.In()
 	rangeDateSearchDeclar := func() {
@@ -159,7 +160,9 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		}
 		fieldName := b.GetOneOfFieldName(message, field)
 		variableName := "this." + fieldName
-		b.generateStringQuerier(once2, variableName, ccTypeName, fieldName, fieldQeurier)
+		if variableName != "" {
+			b.generateQuerier(once2, variableName, ccTypeName, fieldName, fieldQeurier)
+		}
 		// }
 	}
 	b.P(`return query`)
@@ -167,7 +170,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`}`)
 }
 
-func (b *buildquery) generateStringQuerier(once *sync.Once, variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
+func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
 	rangeQueryDeclar := func() {
 		b.P(`r := &rangeQuery{`)
 		b.P(`mapQuery: map[string]*`, b.elasticPkg.Use(), `.RangeQuery{},`)
