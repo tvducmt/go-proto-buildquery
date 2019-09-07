@@ -151,7 +151,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	}
 
 	once1 := &sync.Once{}
-	once2 := &sync.Once{}
+
 	for _, field := range message.Field {
 		once1.Do(rangeDateSearchDeclar)
 		fieldQeurier := b.getFieldQueryIfAny(field)
@@ -161,17 +161,31 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		fieldName := b.GetOneOfFieldName(message, field)
 		variableName := "this." + fieldName
 		// b.P(`fmt.Println("variableName", ` + variableName + `)`)
-		if variableName != "" {
-			b.generateQuerier(once2, variableName, ccTypeName, fieldName, fieldQeurier)
-		}
-		// }
+		b.generateQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
 	}
+	b.P(`if !disableRangeFilter || searchPhone {`)
+	b.P(`for k, v := range rangeDateSearch.mapRangeDateSearch {`)
+	b.P(`glog.Infoln(k, v)`)
+	b.P(`f, t := v.from, v.to`)
+	b.P(`if f != nil && t != nil {`)
+	b.P(`if !searchPhone && bHasSearchPrefix && f.Day+7 > t.Day && f.Month == t.Month && f.Year == t.Year {`)
+	b.P(`tm := time.Date(int(f.Year), time.Month(f.Month), int(f.Day), 0, 0, 0, 0, time.UTC).Add(-7 * 24 * time.Hour)`)
+	b.P(`f.Year, f.Month, f.Day = int32(tm.Year()), int32(tm.Month()), int32(tm.Day())`)
+	b.P(`}`)
+	b.P(`query = query.Filter(elastic.NewRangeQuery(k).Gte(dateToStringSearch(f)).Lte(dateToStringSearch(t)).TimeZone("+07:00"))`)
+	b.P(`} else {`)
+	b.P(`glog.Errorln("Invalid ", k)`)
+	b.P(`}`)
+	b.P(`}`)
+	b.P(`}`)
+
 	b.P(`return query`)
 	b.Out()
 	b.P(`}`)
 }
 
-func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
+func (b *buildquery) generateQuerier(variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
+	once := &sync.Once{}
 	rangeQueryDeclar := func() {
 		b.P(`r := &rangeQuery{`)
 		b.P(`mapQuery: map[string]*`, b.elasticPkg.Use(), `.RangeQuery{},`)
@@ -220,7 +234,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`query = query.Must(elastic.NewWildcardQuery(` + fieldName + `, fmt.Sprintf("%v*", ` + variableName + `)))`)
 		b.P(`}`)
 	case "=": //Term
-		b.P(`if ` + variableName + ` != nil{`)
+		b.P(`if ` + variableName + `!= nil{`)
 		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
 		b.P(`query = query.Filter(elastic.NewTermsQuery("` + fieldName + `",` + variableName + `))`)
 		b.P(`} else if isEnumAll(`, variableName, `) {`)
@@ -274,22 +288,5 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 	default:
 		b.P(`glog.Warningln("Unknow ", params[1])`)
 	}
-
-	b.P(`if !disableRangeFilter || searchPhone {`)
-	b.P(`for k, v := range rangeDateSearch.mapRangeDateSearch {`)
-	b.P(`glog.Infoln(k, v)`)
-	b.P(`f, t := v.from, v.to`)
-	b.P(`if f != nil && t != nil {`)
-	b.P(`if !searchPhone && bHasSearchPrefix && f.Day+7 > t.Day && f.Month == t.Month && f.Year == t.Year {`)
-	b.P(`tm := time.Date(int(f.Year), time.Month(f.Month), int(f.Day), 0, 0, 0, 0, time.UTC).Add(-7 * 24 * time.Hour)`)
-	b.P(`f.Year, f.Month, f.Day = int32(tm.Year()), int32(tm.Month()), int32(tm.Day())`)
-	b.P(`}`)
-	b.P(`query = query.Filter(elastic.NewRangeQuery(k).Gte(dateToStringSearch(f)).Lte(dateToStringSearch(t)).TimeZone("+07:00"))`)
-	b.P(`} else {`)
-	b.P(`glog.Errorln("Invalid ", k)`)
-	b.P(`}`)
-
-	b.P(`}`)
-	b.P(`}`)
 
 }
