@@ -83,7 +83,7 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`}`)
 
 	b.P(`type rangeDateSearch struct {`)
-	b.P(`from, to *proto.Date`)
+	b.P(`from, to *`, b.protoPkg.Use(), `.Date`)
 	b.P(`}`)
 
 	b.P(`func (r *mapRangeDateSearch) addFrom(name string, vv interface{}) bool {`)
@@ -168,12 +168,31 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gte(` + variableName + `))`)
 		b.P(`}`)
-
+	case "<=":
+		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
+		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `".Lte(` + variableName + `))`)
+		b.P(`}`)
+	case ">":
+		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
+		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gt(` + variableName + `))`)
+		b.P(`}`)
+	case "<":
+		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
+		b.P(`	query = query.Must(r.NewRangeQuery("` + fieldName + `").Lt(` + variableName + `))`)
+		b.P(`}`)
+	case "!=":
+		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
+		b.P(`query = query.MustNot(elastic.NewTermsQuery(params[0], DoubleSlice(vv)...))`)
+		b.P(`} else {`)
+		b.P(`comp := convertDateTimeSearch(` + variableName + `,"!=")`)
+		b.P(`query = query.MustNot(elastic.NewTermQuery("` + fieldName + `",comp))`)
+		b.P(`}`)
 	default:
-		b.P("nullll")
-		// b.Out()
-		//b.P(b.fmtPkg.Use(), `.Errorf("Unknow"`, fv.GetQuery(), `)`)
-
+		b.P(`glog.Warningln("Unknow ", params[1])`)
 	}
 
 }
