@@ -78,6 +78,26 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`return q`)
 	b.P(`}`)
 
+	b.P(`type mapRangeDateSearch struct {`)
+	b.P(`mapRangeDateSearch map[string]*rangeDateSearch`)
+	b.P(`}`)
+
+	b.P(`type rangeDateSearch struct {`)
+	b.P(`from, to *proto.Date`)
+	b.P(`}`)
+
+	b.P(`func (r *mapRangeDateSearch) addFrom(name string, vv interface{}) bool {`)
+	b.P(`if from, ok := vv.(*`, b.protoPkg.Use(), `.Date); ok {`)
+	b.P(`	if q, ok := r.mapRangeDateSearch[name]; ok {`)
+	b.P(`		q.from = from`)
+	b.P(`	} else {`)
+	b.P(`		r.mapRangeDateSearch[name] = &rangeDateSearch{from: from}`)
+	b.P(`	}`)
+	b.P(`	return true`)
+	b.P(`}`)
+	b.P(`return false`)
+	b.P(`}`)
+
 	for _, msg := range file.Messages() {
 		if msg.DescriptorProto.GetOptions().GetMapEntry() {
 			continue
@@ -109,6 +129,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
 	b.P(`}`)
 
+	b.P(`rangeDateSearch := &mapRangeDateSearch{mapRangeDateSearch: map[string]*rangeDateSearch{}}`)
 	for _, field := range message.Field {
 
 		fieldQeurier := b.getFieldQueryIfAny(field)
