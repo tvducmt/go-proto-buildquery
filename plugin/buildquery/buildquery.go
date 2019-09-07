@@ -75,10 +75,11 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.In()
 	for _, field := range message.Field {
 		m := b.GoMapType(nil, field)
-		mapgoTyp, keyField, keyAliasField := m.GoType, m.KeyField, m.KeyAliasField
-		b.P(`mapgoTyp`, mapgoTyp)
-		b.P(`keyField`, keyField)
-		b.P(`keyAliasField`, keyAliasField)
+		keyField := m.KeyField
+		keygoTyp, _ := b.GoType(nil, keyField)
+		b.P(`keygoTyp`, keygoTyp)
+		// b.P(`keyField`, keyField)
+		// b.P(`keyAliasField`, keyAliasField)
 		// b.P(`field`, field.GetName())
 		// fieldQeurier := b.getFieldQueryIfAny(field)
 		// b.P(`fieldQeurier`, fieldQeurier.GetQuery())
