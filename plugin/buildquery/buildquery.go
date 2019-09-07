@@ -114,13 +114,13 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 	switch fv.GetQuery() {
 	case "=": //Term
 		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
-		b.P(`query = query.Filter(elastic.NewTermsQuery(` + fieldName + `,` + variableName + `))`)
+		b.P(`query = query.Filter(elastic.NewTermsQuery("` + fieldName + `",` + variableName + `))`)
 		b.P(`} else {`)
 		b.P(`comp := convertDateTimeSearch(` + variableName + `,"=")`)
-		b.P(`query = query.Filter(elastic.NewTermQuery(` + string(fieldName) + `,comp))`)
+		b.P(`query = query.Filter(elastic.NewTermQuery("` + fieldName + `",comp))`)
 		b.P(`}`)
 	case "mt":
-		b.P(`query = query.Must(elastic.NewMatchQuery(` + string(fieldName) + `,` + variableName + `))`)
+		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `",` + variableName + `))`)
 		// query = query.Must(elastic.NewMatchQuery(params[0], vv))
 	case "match":
 		b.P(`query = query.Must(elastic.NewMatchQuery(params[0]+".search", vv).MinimumShouldMatch("3<90%"))`)
