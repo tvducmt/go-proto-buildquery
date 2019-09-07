@@ -142,14 +142,15 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.In()
 	b.P(`query := elastic.NewBoolQuery()`)
 	b.In()
+	rangeDateSearchDeclar := func() {
+		b.P(`rangeDateSearch := &mapRangeDateSearch{mapRangeDateSearch: map[string]*rangeDateSearch{}}`)
+		b.P(`bHasSearchPrefix, disableRangeFilter, searchPhone := false, false, false`)
+	}
 
-	b.P(`rangeDateSearch := &mapRangeDateSearch{mapRangeDateSearch: map[string]*rangeDateSearch{}}`)
-
-	b.P(`bHasSearchPrefix, disableRangeFilter, searchPhone := false, false, false`)
 	once := &sync.Once{}
 
 	for _, field := range message.Field {
-
+		once.Do(rangeDateSearchDeclar)
 		fieldQeurier := b.getFieldQueryIfAny(field)
 		if fieldQeurier == nil {
 			continue
@@ -165,7 +166,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 }
 
 func (b *buildquery) generateStringQuerier(once *sync.Once, variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
-	onceBody := func() {
+	rangeQueryDeclar := func() {
 		b.P(`r := &rangeQuery{`)
 		b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
 		b.P(`}`)
@@ -217,25 +218,25 @@ func (b *buildquery) generateStringQuerier(once *sync.Once, variableName string,
 		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `.search",` + variableName + `).MinimumShouldMatch("3<90%"))`)
 	case ">=":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
-		once.Do(onceBody)
+		once.Do(rangeQueryDeclar)
 		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gte(` + variableName + `))`)
 		b.P(`}`)
 	case "<=":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
-		once.Do(onceBody)
+		once.Do(rangeQueryDeclar)
 		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Lte(` + variableName + `))`)
 		b.P(`}`)
 	case ">":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
-		once.Do(onceBody)
+		once.Do(rangeQueryDeclar)
 		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gt(` + variableName + `))`)
 		b.P(`}`)
 	case "<":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
-		once.Do(onceBody)
+		once.Do(rangeQueryDeclar)
 		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`	query = query.Must(r.NewRangeQuery("` + fieldName + `").Lt(` + variableName + `))`)
 		b.P(`}`)
