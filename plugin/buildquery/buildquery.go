@@ -74,15 +74,20 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`query := elastic.NewBoolQuery()`)
 	b.In()
 	for _, field := range message.Field {
-		b.P(`field`, field.GetName())
-		fieldQeurier := b.getFieldQueryIfAny(field)
-		b.P(`fieldQeurier`, fieldQeurier.GetQuery())
-		if fieldQeurier == nil {
-			continue
-		}
-		fieldName := b.GetOneOfFieldName(message, field)
-		// variableName := "this." + fieldName
-		b.P(`fieldName`, fieldName)
+		m := b.GoMapType(nil, field)
+		mapgoTyp, keyField, keyAliasField := m.GoType, m.KeyField, m.KeyAliasField
+		b.P(`mapgoTyp`, mapgoTyp)
+		b.P(`keyField`, keyField)
+		b.P(`keyAliasField`, keyAliasField)
+		// b.P(`field`, field.GetName())
+		// fieldQeurier := b.getFieldQueryIfAny(field)
+		// b.P(`fieldQeurier`, fieldQeurier.GetQuery())
+		// if fieldQeurier == nil {
+		// 	continue
+		// }
+		// fieldName := b.GetOneOfFieldName(message, field)
+		// 	// variableName := "this." + fieldName
+		// b.P(`fieldName`, fieldName)
 		// b.P(`field.IsString()`, field.IsString())
 		//if field.IsString() {
 		// b.generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
