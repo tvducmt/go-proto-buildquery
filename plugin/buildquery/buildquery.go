@@ -102,11 +102,11 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 	b.P(`fv.GetQuery() `, fv.GetQuery())
 	switch fv.GetQuery() {
 	case "mt":
-		b.Out()
-		b.P(`query = query.Must(elastic.NewMatchQuery(`, fieldName, `,`, ccTypeName, `.fieldName))`)
+		// b.Out()/
+		b.P(`query = query.Must(elastic.NewMatchQuery(`, fieldName, `,`, ccTypeName, `.`, fieldName, `))`)
 
 	default:
-		b.Out()
+		// b.Out()
 		b.P(b.fmtPkg.Use(), `.Errorf("Unknow"`, fv.GetQuery(), `)`)
 
 	}
