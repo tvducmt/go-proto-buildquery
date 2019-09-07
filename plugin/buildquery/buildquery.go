@@ -1,8 +1,6 @@
 package buildquery
 
 import (
-	"fmt"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
@@ -57,6 +55,16 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`return vv`)
 	b.P(`}`)
 
+	b.P(`func isEnumAll(vv interface{}) bool {`)
+	b.P(`type enumInterface interface {`)
+	b.P(`EnumDescriptor() ([]byte, []int)`)
+	b.P(`}`)
+	b.P(`if _, ok := vv.(enumInterface); ok {`)
+	b.P(`return fmt.Sprintf("%d", vv) == "-1"`)
+	b.P(`}`)
+	b.P(`return false`)
+	b.P(`}`)
+
 	for _, msg := range file.Messages() {
 		if msg.DescriptorProto.GetOptions().GetMapEntry() {
 			continue
@@ -90,7 +98,6 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 			continue
 		}
 		fieldName := b.GetOneOfFieldName(message, field)
-		b.P(`var `, fieldName, ` string`)
 		variableName := "this." + fieldName
 		b.generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
 		// }
@@ -99,15 +106,6 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.Out()
 	b.P(`}`)
 }
-func isEnumAll(vv interface{}) bool {
-	type enumInterface interface {
-		EnumDescriptor() ([]byte, []int)
-	}
-	if _, ok := vv.(enumInterface); ok {
-		return fmt.Sprintf("%d", vv) == "-1"
-	}
-	return false
-}
 
 func (b *buildquery) generateStringQuerier(variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
 	// b.P(`fv.GetQuery() `, fv.GetQuery())
@@ -115,7 +113,9 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 	case "=": //Term
 		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
 		b.P(`query = query.Filter(elastic.NewTermsQuery("` + fieldName + `",` + variableName + `))`)
-		b.P(`} else {`)
+		b.P(`} else if isEnumAll(`, variableName, `) {`)
+		b.P(`glog.Infoln("` + fieldName + `", "Is enum all")`)
+		b.P(`} else{`)
 		b.P(`comp := convertDateTimeSearch(` + variableName + `,"=")`)
 		b.P(`query = query.Filter(elastic.NewTermQuery("` + fieldName + `",comp))`)
 		b.P(`}`)
