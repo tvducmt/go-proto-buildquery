@@ -65,6 +65,19 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`return false`)
 	b.P(`}`)
 
+	b.P(`type rangeQuery struct {`)
+	b.P(`mapQuery map[string]*elastic.RangeQuery`)
+	b.P(`}`)
+
+	b.P(`func (r *rangeQuery) NewRangeQuery(name string) *elastic.RangeQuery {`)
+	b.P(`if q, ok := r.mapQuery[name]; ok {`)
+	b.P(`return q`)
+	b.P(`}`)
+	b.P(`q := elastic.NewRangeQuery(name)`)
+	b.P(`r.mapQuery[name] = q`)
+	b.P(`return q`)
+	b.P(`}`)
+
 	for _, msg := range file.Messages() {
 		if msg.DescriptorProto.GetOptions().GetMapEntry() {
 			continue
@@ -91,6 +104,11 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.In()
 	b.P(`query := elastic.NewBoolQuery()`)
 	b.In()
+
+	b.P(`r := &rangeQuery{`)
+	b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
+	b.P(`}`)
+
 	for _, field := range message.Field {
 
 		fieldQeurier := b.getFieldQueryIfAny(field)
@@ -123,12 +141,12 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `",` + variableName + `))`)
 		// query = query.Must(elastic.NewMatchQuery(params[0], vv))
 	case "match":
-		b.P(`query = query.Must(elastic.NewMatchQuery(params[0]+".search", vv).MinimumShouldMatch("3<90%"))`)
+		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `".search",` + variableName + `).MinimumShouldMatch("3<90%"))`)
 	case ">=":
-		b.P(`glog.Infoln(params[0], vv)`)
-		// if !rangeDateSearch.addFrom(params[0], vv) {
-		// 	query = query.Must(r.NewRangeQuery(params[0]).Gte(vv))
-		// }
+		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
+		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gte(` + variableName + `))`)
+		b.P(`}`)
 
 	default:
 		b.P("nullll")
