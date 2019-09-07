@@ -3,7 +3,6 @@ package buildquery
 import (
 	"fmt"
 
-	"github.com/gogo/protobuf/gogoproto"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
@@ -40,10 +39,10 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 
 	b.fmtPkg = b.NewImport("fmt")
 	// stringsPkg := b.NewImport("strings")
-	b.protoPkg = b.NewImport("github.com/gogo/protobuf/proto")
-	if !gogoproto.ImportsGoGoProto(file.FileDescriptorProto) {
-		b.protoPkg = b.NewImport("github.com/golang/protobuf/proto")
-	}
+	b.protoPkg = b.NewImport("git.zapa.cloud/merchant-tools/helper/proto")
+	// if !gogoproto.ImportsGoGoProto(file.FileDescriptorProto) {
+	// 	b.protoPkg = b.NewImport("github.com/golang/protobuf/proto")
+	// }
 	b.querierPkg = b.NewImport("github.com/tvducmt/go-proto-buildquery")
 
 	b.P(`func convertDateTimeSearch(vv interface{}, op string) interface{} {`)
