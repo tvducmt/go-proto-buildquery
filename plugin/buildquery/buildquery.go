@@ -142,6 +142,8 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`}`)
 
 	b.P(`rangeDateSearch := &mapRangeDateSearch{mapRangeDateSearch: map[string]*rangeDateSearch{}}`)
+
+	b.P(`bHasSearchPrefix, disableRangeFilter, searchPhone := false, false, false`)
 	for _, field := range message.Field {
 
 		fieldQeurier := b.getFieldQueryIfAny(field)
@@ -161,6 +163,17 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 func (b *buildquery) generateStringQuerier(variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
 	// b.P(`fv.GetQuery() `, fv.GetQuery())
 	switch fv.GetQuery() {
+	case "*%*":
+		b.P(`bHasSearchPrefix = true`)
+		b.P(`if !disableRangeFilter && len(fmt.Sprintf("%v", ,` + variableName + `,)) >= 8 {`)
+		b.P(`disableRangeFilter = true`)
+		b.P(`}`)
+		b.P(`if ` + fieldName + ` == "userInfo.phoneNumber" {`)
+		b.P(`searchPhone = true`)
+		b.P(`}`)
+		b.P(`query = query.Must(elastic.NewMultiMatchQuery(`)
+		b.P(variableName + `, "` + fieldName + `.search", "` + fieldName + `.search_reverse").MaxExpansions(1024).Slop(2).Type("phrase_prefix"))`)
+
 	case "=": //Term
 		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
 		b.P(`query = query.Filter(elastic.NewTermsQuery("` + fieldName + `",` + variableName + `))`)
@@ -198,7 +211,7 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 	case "!=":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
 		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
-		b.P(`query = query.MustNot(elastic.NewTermsQuery(params[0], DoubleSlice(vv)...))`)
+		b.P(`query = query.MustNot(elastic.NewTermsQuery("` + fieldName + `",` + variableName + `))`)
 		b.P(`} else {`)
 		b.P(`comp := convertDateTimeSearch(` + variableName + `,"!=")`)
 		b.P(`query = query.MustNot(elastic.NewTermQuery("` + fieldName + `",comp))`)
