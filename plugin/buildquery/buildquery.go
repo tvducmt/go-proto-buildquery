@@ -141,10 +141,6 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`query := elastic.NewBoolQuery()`)
 	b.In()
 
-	b.P(`r := &rangeQuery{`)
-	b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
-	b.P(`}`)
-
 	b.P(`rangeDateSearch := &mapRangeDateSearch{mapRangeDateSearch: map[string]*rangeDateSearch{}}`)
 
 	b.P(`bHasSearchPrefix, disableRangeFilter, searchPhone := false, false, false`)
@@ -212,21 +208,33 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `.search",` + variableName + `).MinimumShouldMatch("3<90%"))`)
 	case ">=":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`r := &rangeQuery{`)
+		b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
+		b.P(`}`)
 		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gte(` + variableName + `))`)
 		b.P(`}`)
 	case "<=":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`r := &rangeQuery{`)
+		b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
+		b.P(`}`)
 		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Lte(` + variableName + `))`)
 		b.P(`}`)
 	case ">":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`r := &rangeQuery{`)
+		b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
+		b.P(`}`)
 		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gt(` + variableName + `))`)
 		b.P(`}`)
 	case "<":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`r := &rangeQuery{`)
+		b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
+		b.P(`}`)
 		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`	query = query.Must(r.NewRangeQuery("` + fieldName + `").Lt(` + variableName + `))`)
 		b.P(`}`)
