@@ -146,7 +146,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`rangeDateSearch := &mapRangeDateSearch{mapRangeDateSearch: map[string]*rangeDateSearch{}}`)
 
 	b.P(`bHasSearchPrefix, disableRangeFilter, searchPhone := false, false, false`)
-	var once sync.Once
+	once := &sync.Once{}
 
 	for _, field := range message.Field {
 
@@ -164,7 +164,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`}`)
 }
 
-func (b *buildquery) generateStringQuerier(once sync.Once, variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
+func (b *buildquery) generateStringQuerier(once *sync.Once, variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
 	onceBody := func() {
 		b.P(`r := &rangeQuery{`)
 		b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
