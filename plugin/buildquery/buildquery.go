@@ -71,17 +71,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`query := elastic.NewBoolQuery()`)
 	b.In()
 	for _, field := range message.Field {
-		// if field.IsMessage() {
-		// 	b.P(`IsMessage`)
-		// }
-		// desc := b.ObjectNamed(field.GetTypeName())
-		// msgname := b.TypeName(desc)
-		// b.P(`msgname`, msgname)
-		// b.P(`keyField`, keyField)
-		// b.P(`keyAliasField`, keyAliasField)
-		// b.P(`field`, field.GetName())
 		fieldQeurier := b.getFieldQueryIfAny(field)
-		b.P(`fieldQeurier`, fieldQeurier.GetQuery())
 		if fieldQeurier == nil {
 			continue
 		}
@@ -98,12 +88,10 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`}`)
 }
 func (b *buildquery) generateStringQuerier(variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
-	b.P(`fv.GetQuery() `, fv.GetQuery())
 	switch fv.GetQuery() {
 	case "mt":
 		b.Out()
-		b.P(`query = query.Must(elastic.NewMatchQuery(`, fieldName, `,`, ccTypeName, `.fieldName))`)
-
+		b.P(`query = query.Must(elastic.NewMatchQuery(`, fieldName, `,`, ccTypeName, `.`, fieldName, `))`)
 	default:
 		b.Out()
 		b.P(b.fmtPkg.Use(), `.Errorf("Unknow"`, fv.GetQuery(), `)`)
