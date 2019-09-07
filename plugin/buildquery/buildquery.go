@@ -57,7 +57,7 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 
 func (b *buildquery) getFieldQueryIfAny(field *descriptor.FieldDescriptorProto) *querier.FieldQuery {
 	if field.Options != nil {
-		v, err := proto.GetExtension(field, querier.E_Field)
+		v, err := proto.GetExtension(field.Options, querier.E_Field)
 		if err == nil && v.(*querier.FieldQuery) != nil {
 			b.P(`querier.FieldQuery`)
 			return (v.(*querier.FieldQuery))
@@ -74,20 +74,20 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`query := elastic.NewBoolQuery()`)
 	b.In()
 	for _, field := range message.Field {
-		if field.IsMessage() {
-			b.P(`IsMessage`)
-		}
-		desc := b.ObjectNamed(field.GetTypeName())
-		msgname := b.TypeName(desc)
-		b.P(`msgname`, msgname)
+		// if field.IsMessage() {
+		// 	b.P(`IsMessage`)
+		// }
+		// desc := b.ObjectNamed(field.GetTypeName())
+		// msgname := b.TypeName(desc)
+		// b.P(`msgname`, msgname)
 		// b.P(`keyField`, keyField)
 		// b.P(`keyAliasField`, keyAliasField)
 		// b.P(`field`, field.GetName())
-		// fieldQeurier := b.getFieldQueryIfAny(field)
-		// b.P(`fieldQeurier`, fieldQeurier.GetQuery())
-		// if fieldQeurier == nil {
-		// 	continue
-		// }
+		fieldQeurier := b.getFieldQueryIfAny(field)
+		b.P(`fieldQeurier`, fieldQeurier.GetQuery())
+		if fieldQeurier == nil {
+			continue
+		}
 		// fieldName := b.GetOneOfFieldName(message, field)
 		// 	// variableName := "this." + fieldName
 		// b.P(`fieldName`, fieldName)
