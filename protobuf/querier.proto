@@ -1,5 +1,5 @@
 
-syntax = "proto3";
+syntax = "proto2";
 package querier;
 
 import "google/protobuf/descriptor.proto";
@@ -7,9 +7,9 @@ import "google/protobuf/descriptor.proto";
 option go_package = "querier";
 
 extend google.protobuf.FieldOptions {
-     FieldQuery field = 66666;
+    optional FieldQuery field = 66666;
   }
 
 message FieldQuery {
-     string query = 1;
+    optional string query = 1;
 }
