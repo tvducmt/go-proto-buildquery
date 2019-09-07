@@ -101,16 +101,16 @@ func generateStringQuerier(variableName string, ccTypeName string, fieldName str
 	// b.P(`fv.GetQuery() `, fv.GetQuery())
 	switch fv.GetQuery() {
 	case "=": //Term
-		if reflect.TypeOf(ccTypeName+`.`+fieldName).Kind() == reflect.Slice {
+		if reflect.TypeOf(variableName).Kind() == reflect.Slice {
 			return `query = query.Filter(elastic.NewTermsQuery(params[0], DoubleSlice(vv)...))`
-		} else if isEnumAll(ccTypeName + `.` + fieldName) {
-			return `glog.Infoln(params[0], "Is enum all")`
+		} else if isEnumAll(variableName) {
+			return `glog.Infoln(` + fieldName + `, Is enum all)`
 		} else {
 			//	comp := convertDateTimeSearch(vv, params[1])
-			return `query = query.Filter(elastic.NewTermQuery(params[0], comp))`
+			return `query = query.Filter(elastic.NewTermQuery(` + string(fieldName) + `,comp))`
 		}
 	case "mt":
-		return `query = query.Must(elastic.NewMatchQuery(` + fieldName + `,` + ccTypeName + `.` + fieldName + `))`
+		return `query = query.Must(elastic.NewMatchQuery(` + string(fieldName) + `,` + variableName + `))`
 		// query = query.Must(elastic.NewMatchQuery(params[0], vv))
 	case "match":
 		return `query = query.Must(elastic.NewMatchQuery(params[0]+".search", vv).MinimumShouldMatch("3<90%"))`
