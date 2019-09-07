@@ -141,7 +141,7 @@ func (b *buildquery) generateStringQuerier(variableName string, ccTypeName strin
 		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `",` + variableName + `))`)
 		// query = query.Must(elastic.NewMatchQuery(params[0], vv))
 	case "match":
-		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `".search",` + variableName + `).MinimumShouldMatch("3<90%"))`)
+		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `.search",` + variableName + `).MinimumShouldMatch("3<90%"))`)
 	case ">=":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
 		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
