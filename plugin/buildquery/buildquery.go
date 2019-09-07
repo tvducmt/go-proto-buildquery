@@ -1,6 +1,9 @@
 package buildquery
 
 import (
+	"fmt"
+	"reflect"
+
 	"github.com/gogo/protobuf/gogoproto"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
@@ -71,39 +74,51 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`query := elastic.NewBoolQuery()`)
 	b.In()
 	for _, field := range message.Field {
-		// if field.IsMessage() {
-		// 	b.P(`IsMessage`)
-		// }
-		// desc := b.ObjectNamed(field.GetTypeName())
-		// msgname := b.TypeName(desc)
-		// b.P(`msgname`, msgname)
-		// b.P(`keyField`, keyField)
-		// b.P(`keyAliasField`, keyAliasField)
-		// b.P(`field`, field.GetName())
+
 		fieldQeurier := b.getFieldQueryIfAny(field)
-		b.P(`fieldQeurier`, fieldQeurier.GetQuery())
 		if fieldQeurier == nil {
 			continue
 		}
-		b.P(`Intoherreier`)
 		fieldName := b.GetOneOfFieldName(message, field)
 		variableName := "this." + fieldName
-		// b.P(`fieldName`, fieldName)
-		// b.P(`field.IsString()`, field.IsString())
-		//if field.IsString() {
-		b.P("retur", generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier))
+		b.P(generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier))
 		// }
 	}
 	b.P(`return query`)
 	b.Out()
 	b.P(`}`)
 }
+func isEnumAll(vv interface{}) bool {
+	type enumInterface interface {
+		EnumDescriptor() ([]byte, []int)
+	}
+	if _, ok := vv.(enumInterface); ok {
+		return fmt.Sprintf("%d", vv) == "-1"
+	}
+	return false
+}
 func generateStringQuerier(variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) string {
 	// b.P(`fv.GetQuery() `, fv.GetQuery())
 	switch fv.GetQuery() {
+	case "=": //Term
+		if reflect.TypeOf(ccTypeName+`.`+fieldName).Kind() == reflect.Slice {
+			return `query = query.Filter(elastic.NewTermsQuery(params[0], DoubleSlice(vv)...))`
+		} else if isEnumAll(ccTypeName + `.` + fieldName) {
+			return `glog.Infoln(params[0], "Is enum all")`
+		} else {
+			//	comp := convertDateTimeSearch(vv, params[1])
+			return `query = query.Filter(elastic.NewTermQuery(params[0], comp))`
+		}
 	case "mt":
-		// b.Out()/
 		return `query = query.Must(elastic.NewMatchQuery(` + fieldName + `,` + ccTypeName + `.` + fieldName + `))`
+		// query = query.Must(elastic.NewMatchQuery(params[0], vv))
+	case "match":
+		return `query = query.Must(elastic.NewMatchQuery(params[0]+".search", vv).MinimumShouldMatch("3<90%"))`
+	case ">=":
+		return `glog.Infoln(params[0], vv)`
+		// if !rangeDateSearch.addFrom(params[0], vv) {
+		// 	query = query.Must(r.NewRangeQuery(params[0]).Gte(vv))
+		// }
 
 	default:
 		return "nullll"
