@@ -160,9 +160,10 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		}
 		fieldName := b.GetOneOfFieldName(message, field)
 		variableName := "this." + fieldName
-		if variableName != "" {
-			b.generateQuerier(once2, variableName, ccTypeName, fieldName, fieldQeurier)
-		}
+		b.P(`fmt.Println(variableName, ` + variableName + `)`)
+		// if variableName != "" {
+		b.generateQuerier(once2, variableName, ccTypeName, fieldName, fieldQeurier)
+		// }
 		// }
 	}
 	b.P(`return query`)
