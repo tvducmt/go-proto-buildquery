@@ -91,7 +91,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 			continue
 		}
 		fieldName := b.GetOneOfFieldName(message, field)
-		b.P(`var `, fieldName, `string`)
+		b.P(`var `, fieldName, ` string`)
 		variableName := "this." + fieldName
 		b.generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
 		// }
