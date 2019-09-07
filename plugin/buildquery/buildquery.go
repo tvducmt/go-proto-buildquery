@@ -146,6 +146,8 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`rangeDateSearch := &mapRangeDateSearch{mapRangeDateSearch: map[string]*rangeDateSearch{}}`)
 
 	b.P(`bHasSearchPrefix, disableRangeFilter, searchPhone := false, false, false`)
+	var once sync.Once
+
 	for _, field := range message.Field {
 
 		fieldQeurier := b.getFieldQueryIfAny(field)
@@ -154,7 +156,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		}
 		fieldName := b.GetOneOfFieldName(message, field)
 		variableName := "this." + fieldName
-		b.generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
+		b.generateStringQuerier(once, variableName, ccTypeName, fieldName, fieldQeurier)
 		// }
 	}
 	b.P(`return query`)
@@ -162,8 +164,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	b.P(`}`)
 }
 
-func (b *buildquery) generateStringQuerier(variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
-	var once sync.Once
+func (b *buildquery) generateStringQuerier(once sync.Once, variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
 	onceBody := func() {
 		b.P(`r := &rangeQuery{`)
 		b.P(`mapQuery: map[string]*elastic.RangeQuery{},`)
