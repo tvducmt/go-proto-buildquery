@@ -91,23 +91,24 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		// b.P(`fieldName`, fieldName)
 		// b.P(`field.IsString()`, field.IsString())
 		//if field.IsString() {
-		b.generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
+		b.P("retur", generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier))
 		// }
 	}
 	b.P(`return query`)
 	b.Out()
 	b.P(`}`)
 }
-func (b *buildquery) generateStringQuerier(variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) {
-	b.P(`fv.GetQuery() `, fv.GetQuery())
+func generateStringQuerier(variableName string, ccTypeName string, fieldName string, fv *querier.FieldQuery) string {
+	// b.P(`fv.GetQuery() `, fv.GetQuery())
 	switch fv.GetQuery() {
 	case "mt":
 		// b.Out()/
-		b.P(`query = query.Must(elastic.NewMatchQuery(`, fieldName, `,`, ccTypeName, `.`, fieldName, `))`)
+		return `query = query.Must(elastic.NewMatchQuery(` + fieldName + `,` + ccTypeName + `.` + fieldName + `))`
 
 	default:
+		return "nullll"
 		// b.Out()
-		b.P(b.fmtPkg.Use(), `.Errorf("Unknow"`, fv.GetQuery(), `)`)
+		//b.P(b.fmtPkg.Use(), `.Errorf("Unknow"`, fv.GetQuery(), `)`)
 
 	}
 
