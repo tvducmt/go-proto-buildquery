@@ -161,9 +161,9 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		fieldName := b.GetOneOfFieldName(message, field)
 		variableName := "this." + fieldName
 		b.P(`fmt.Println("variableName", ` + variableName + `)`)
-		// if variableName != "" {
-		b.generateQuerier(once2, variableName, ccTypeName, fieldName, fieldQeurier)
-		// }
+		if variableName != "" {
+			b.generateQuerier(once2, variableName, ccTypeName, fieldName, fieldQeurier)
+		}
 		// }
 	}
 	b.P(`return query`)
@@ -218,7 +218,9 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`query = query.Filter(elastic.NewTermQuery("` + fieldName + `",comp))`)
 		b.P(`}`)
 	case "mt":
+		b.P(`if variableName != ""{`)
 		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `",` + variableName + `))`)
+		b.P(`}`)
 		// query = query.Must(elastic.NewMatchQuery(params[0], vv))
 	case "match":
 		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `.search",` + variableName + `).MinimumShouldMatch("3<90%"))`)
