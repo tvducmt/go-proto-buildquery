@@ -73,11 +73,11 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`mapQuery map[string]*`, b.elasticPkg.Use(), `.RangeQuery`)
 	b.P(`}`)
 
-	b.P(`func (r *rangeQuery) NewRangeQuery(name string) *elastic.RangeQuery {`)
+	b.P(`func (r *rangeQuery) NewRangeQuery(name string) *`, b.elasticPkg.Use(), `.RangeQuery {`)
 	b.P(`if q, ok := r.mapQuery[name]; ok {`)
 	b.P(`return q`)
 	b.P(`}`)
-	b.P(`q := elastic.NewRangeQuery(name)`)
+	b.P(`q := `, b.elasticPkg.Use(), `.NewRangeQuery(name)`)
 	b.P(`r.mapQuery[name] = q`)
 	b.P(`return q`)
 	b.P(`}`)
@@ -149,17 +149,17 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		b.P(`bHasSearchPrefix, disableRangeFilter, searchPhone := false, false, false`)
 	}
 
-	once := &sync.Once{}
-
+	once1 := &sync.Once{}
+	once2 := &sync.Once{}
 	for _, field := range message.Field {
-		once.Do(rangeDateSearchDeclar)
+		once1.Do(rangeDateSearchDeclar)
 		fieldQeurier := b.getFieldQueryIfAny(field)
 		if fieldQeurier == nil {
 			continue
 		}
 		fieldName := b.GetOneOfFieldName(message, field)
 		variableName := "this." + fieldName
-		b.generateStringQuerier(once, variableName, ccTypeName, fieldName, fieldQeurier)
+		b.generateStringQuerier(once2, variableName, ccTypeName, fieldName, fieldQeurier)
 		// }
 	}
 	b.P(`return query`)
