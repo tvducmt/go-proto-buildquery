@@ -46,17 +46,17 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	}
 	b.querierPkg = b.NewImport("github.com/tvducmt/go-proto-buildquery")
 
-	b.P(`func convertDateTimeSearch(vv interface{}, op string) interface{} {`)
-	b.P(`if date, ok := vv.(*proto.Date); ok {`)
-	b.P(`switch op {`)
-	b.P(`case "<":`)
-	b.P(`return proto.DateUpperToTimeSearch(date).UnixNano() / int64(time.Millisecond)`)
-	b.P(`default:`)
-	b.P(`return proto.DateToTimeSearch(date).UnixNano() / int64(time.Millisecond)`)
-	b.P(`}`)
-	b.P(`}`)
-	b.P(`return vv`)
-	b.P(`}`)
+	// b.P(`func convertDateTimeSearch(vv interface{}, op string) interface{} {`)
+	// b.P(`if date, ok := vv.(*proto.Date); ok {`)
+	// b.P(`switch op {`)
+	// b.P(`case "<":`)
+	// b.P(`return proto.DateUpperToTimeSearch(date).UnixNano() / int64(time.Millisecond)`)
+	// b.P(`default:`)
+	// b.P(`return proto.DateToTimeSearch(date).UnixNano() / int64(time.Millisecond)`)
+	// b.P(`}`)
+	// b.P(`}`)
+	// b.P(`return vv`)
+	// b.P(`}`)
 
 	for _, msg := range file.Messages() {
 		if msg.DescriptorProto.GetOptions().GetMapEntry() {
