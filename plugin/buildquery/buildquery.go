@@ -59,11 +59,8 @@ func (b *buildquery) getFieldQueryIfAny(field *descriptor.FieldDescriptorProto) 
 	if field.Options != nil {
 		v, err := proto.GetExtension(field.Options, querier.E_Field)
 		if err == nil && v.(*querier.FieldQuery) != nil {
-			b.P(`querier.FieldQuery`)
 			return (v.(*querier.FieldQuery))
 		}
-		b.P(`field.OptionsError`, err.Error())
-
 	}
 	return nil
 }
@@ -88,12 +85,12 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		if fieldQeurier == nil {
 			continue
 		}
-		// fieldName := b.GetOneOfFieldName(message, field)
-		// 	// variableName := "this." + fieldName
+		fieldName := b.GetOneOfFieldName(message, field)
+		variableName := "this." + fieldName
 		// b.P(`fieldName`, fieldName)
 		// b.P(`field.IsString()`, field.IsString())
 		//if field.IsString() {
-		// b.generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
+		b.generateStringQuerier(variableName, ccTypeName, fieldName, fieldQeurier)
 		// }
 	}
 	b.P(`return query`)
