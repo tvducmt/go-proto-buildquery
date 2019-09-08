@@ -126,13 +126,13 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`return false`)
 	b.P(`}`)
 
-	b.P(`func checkNull(field interface{}) bool {`)
-	b.P(`zero := reflect.Zero(reflect.TypeOf(field)).Interface()	`)
-	b.P(`if reflect.DeepEqual(field, zero) {`)
-	b.P(`return true`)
-	b.P(`}`)
-	b.P(`return false`)
-	b.P(`}`)
+	// b.P(`func checkNull(field interface{}) bool {`)
+	// b.P(`zero := reflect.Zero(reflect.TypeOf(field)).Interface()	`)
+	// b.P(`if reflect.DeepEqual(field, zero) {`)
+	// b.P(`return true`)
+	// b.P(`}`)
+	// b.P(`return false`)
+	// b.P(`}`)
 
 	for _, msg := range file.Messages() {
 		if msg.DescriptorProto.GetOptions().GetMapEntry() {
