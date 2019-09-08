@@ -126,6 +126,14 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`return false`)
 	b.P(`}`)
 
+	b.P(`func checkNull(field interface{}) bool {`)
+	b.P(`zero := reflect.Zero(reflect.TypeOf(field)).Interface()	`)
+	b.P(`if reflect.DeepEqual(field, zero) {`)
+	b.P(`return true`)
+	b.P(`}`)
+	b.P(`return false`)
+	b.P(`}`)
+
 	for _, msg := range file.Messages() {
 		if msg.DescriptorProto.GetOptions().GetMapEntry() {
 			continue
@@ -210,7 +218,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 
 	switch params[1] {
 	case "*%*":
-		b.P(`if ` + variableName + ` != ""{`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`bHasSearchPrefix = true`)
 		b.P(`if !disableRangeFilter && len(fmt.Sprintf("%v",` + variableName + `)) >= 8 {`)
 		b.P(`disableRangeFilter = true`)
@@ -222,19 +230,19 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(variableName + `, "` + params[0] + `.search", "` + params[0] + `.search_reverse").MaxExpansions(1024).Slop(2).Type("phrase_prefix"))`)
 		b.P(`}`)
 	case "*%":
-		b.P(`if ` + variableName + ` != ""{`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewMatchPhrasePrefixQuery(`)
 		b.P(`fmt.Sprintf("%s.search", ` + params[0] + `),`)
 		b.P(variableName + `,).MaxExpansions(1024).Slop(2))`)
 		b.P(`}`)
 	case "%*":
-		b.P(`if ` + variableName + ` != ""{`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewMatchPhrasePrefixQuery(`)
 		b.P(`fmt.Sprintf("%s.search_reverse", ` + params[0] + `,`)
 		b.P(variableName + `,).MaxExpansions(1024).Slop(2))`)
 		b.P(`}`)
 	case "*.*": //Wildcard
-		b.P(`if ` + variableName + ` != ""{`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`s := fmt.Sprintf("%v", ` + variableName + `)`)
 		b.P(`if !strings.Contains(s, "*") {`)
 		b.P(`	s = "*" + s + "*"`)
@@ -242,17 +250,15 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewWildcardQuery(`+params[0]+`, s))`)
 		b.P(`}`)
 	case "*.": //Wildcard
-		b.P(`if ` + variableName + ` != ""{`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewWildcardQuery(`+params[0]+`, fmt.Sprintf("*%v", `+variableName+`)))`)
 		b.P(`}`)
 	case ".*": //Wildcard
-		b.P(`if ` + variableName + ` != ""{`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewWildcardQuery(`+params[0]+`, fmt.Sprintf("%v*", `+variableName+`)))`)
 		b.P(`}`)
-	case "=": //Term
-		b.P(`zero := reflect.Zero(v.Type()).Interface()`)
-		b.P(`if !reflect.DeepEqual(` + variableName + `, zero) {`)
-		// b.P(`if ` + variableName + `!= nil{`)
+	case "=": //Term'
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`if `+b.reflectPkg.Use()+`.TypeOf(`, variableName, `).Kind() == `+b.reflectPkg.Use()+`.Slice {`)
 		b.P(`query = query.Filter(`, b.elasticPkg.Use(), `.NewTermsQuery("`+params[0]+`",`+variableName+`))`)
 		b.P(`} else if isEnumAll(`, variableName, `) {`)
@@ -263,18 +269,18 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`}`)
 		b.P(`}`)
 	case "mt":
-		b.P(`if ` + variableName + ` != ""{`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewMatchQuery("`+params[0]+`",`+variableName+`))`)
 		b.P(`}`)
 		// query = query.Must(elastic.NewMatchQuery(params[0], vv))
 	case "match":
-		b.P(`if ` + variableName + ` != ""{`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewMatchQuery("`+params[0]+`.search",`+variableName+`).MinimumShouldMatch("3<90%"))`)
 		b.P(`}`)
 	case ">=":
 		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`",`+variableName+`)`)
 		once.Do(rangeQueryDeclar)
-		b.P(`if ` + variableName + ` != nil {`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`if !rangeDateSearch.addFrom("` + params[0] + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + params[0] + `").Gte(` + variableName + `))`)
 		b.P(`}`)
@@ -282,7 +288,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 	case "<=":
 		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`",`+variableName+`)`)
 		once.Do(rangeQueryDeclar)
-		b.P(`if ` + variableName + ` != nil {`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`if !rangeDateSearch.addTo("` + params[0] + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + params[0] + `").Lte(` + variableName + `))`)
 		b.P(`}`)
@@ -290,7 +296,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 	case ">":
 		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`",`+variableName+`)`)
 		once.Do(rangeQueryDeclar)
-		b.P(`if ` + variableName + ` != nil {`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`if !rangeDateSearch.addFrom("` + params[0] + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + params[0] + `").Gt(` + variableName + `))`)
 		b.P(`}`)
@@ -298,18 +304,20 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 	case "<":
 		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`",`+variableName+`)`)
 		once.Do(rangeQueryDeclar)
-		b.P(`if ` + variableName + ` != nil {`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`if !rangeDateSearch.addTo("` + params[0] + `", ` + variableName + `) {`)
 		b.P(`	query = query.Must(r.NewRangeQuery("` + params[0] + `").Lt(` + variableName + `))`)
 		b.P(`}`)
 		b.P(`}`)
 	case "!=":
 		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`",`+variableName+`)`)
+		b.P(`!checkNull( ` + variableName + `){`)
 		b.P(`if `, b.reflectPkg.Use(), `.TypeOf(`, variableName, `).Kind() == `, b.reflectPkg.Use(), `.Slice {`)
 		b.P(`query = query.MustNot(`, b.elasticPkg.Use(), `.NewTermsQuery("`+params[0]+`",`+variableName+`))`)
 		b.P(`} else {`)
 		b.P(`comp := convertDateTimeSearch(` + variableName + `,"!=")`)
 		b.P(`query = query.MustNot(`, b.elasticPkg.Use(), `.NewTermQuery("`+params[0]+`",comp))`)
+		b.P(`}`)
 		b.P(`}`)
 	default:
 		b.P(b.glogPkg.Use(), `.Warningln("Unknow ", params[1])`)
