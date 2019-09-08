@@ -156,11 +156,12 @@ func (b *buildquery) getFieldQueryIfAny(field *descriptor.FieldDescriptorProto) 
 }
 func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, message *generator.Descriptor) {
 	ccTypeName := generator.CamelCaseSlice(message.TypeName())
-	b.P(`func (this *`, ccTypeName, `) BuildQuery() *`, b.elasticPkg.Use(), `.BoolQuery {`)
+	b.P(`func (this *`, ccTypeName, `) BuildQuery(query *`, b.elasticPkg.Use(), `.BoolQuery) *`, b.elasticPkg.Use(), `.BoolQuery {`)
 	b.In()
 	b.P(b.flagPkg.Use(), `.Parse()`)
-	b.P(`query := `, b.elasticPkg.Use(), `.NewBoolQuery()`)
-	b.In()
+	b.P(`if query == nil {`)
+	b.P(`query = `, b.elasticPkg.Use(), `.NewBoolQuery()`)
+	b.P(`}`)
 	rangeDateSearchDeclar := func() {
 		b.P(`rangeDateSearch := &mapRangeDateSearch{mapRangeDateSearch: map[string]*rangeDateSearch{}}`)
 		b.P(`bHasSearchPrefix, disableRangeFilter, searchPhone := false, false, false`)
