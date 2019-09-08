@@ -203,6 +203,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 	params := strings.Split(tag, ",")
 	if len(params) != 2 {
 		glog.Warningln(tag, len(params))
+		return
 	}
 	switch params[1] {
 	case "*%*":
@@ -269,7 +270,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if ` + variableName + ` != nil {`)
-		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
+		b.P(`if !rangeDateSearch.addFrom("` + params[0] + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gte(` + variableName + `))`)
 		b.P(`}`)
 		b.P(`}`)
@@ -277,7 +278,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if ` + variableName + ` != nil {`)
-		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
+		b.P(`if !rangeDateSearch.addTo("` + params[0] + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Lte(` + variableName + `))`)
 		b.P(`}`)
 		b.P(`}`)
@@ -285,7 +286,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if ` + variableName + ` != nil {`)
-		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
+		b.P(`if !rangeDateSearch.addFrom("` + params[0] + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gt(` + variableName + `))`)
 		b.P(`}`)
 		b.P(`}`)
@@ -293,7 +294,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if ` + variableName + ` != nil {`)
-		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
+		b.P(`if !rangeDateSearch.addTo("` + params[0] + `", ` + variableName + `) {`)
 		b.P(`	query = query.Must(r.NewRangeQuery("` + fieldName + `").Lt(` + variableName + `))`)
 		b.P(`}`)
 		b.P(`}`)
