@@ -15,9 +15,12 @@ type buildquery struct {
 	*generator.Generator
 	generator.PluginImports
 	querierPkg generator.Single
-	fmtPkg     generator.Single
+	glogPkg    generator.Single
 	protoPkg   generator.Single
 	elasticPkg generator.Single
+	reflectPkg generator.Single
+	timePkg    generator.Single
+	flagPkg    generator.Single
 	// query *elastic.BoolQuery
 }
 
@@ -40,10 +43,13 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	// proto3 := gogoproto.IsProto3(file.FileDescriptorProto)
 	b.PluginImports = generator.NewPluginImports(b.Generator)
 
-	b.fmtPkg = b.NewImport("fmt")
+	b.glogPkg = b.NewImport("github.com/golang/glog")
 	// stringsPkg := b.NewImport("strings")
 	b.protoPkg = b.NewImport("git.zapa.cloud/merchant-tools/helper/proto")
 	b.elasticPkg = b.NewImport("git.zapa.cloud/merchant-tools/helper/search/elastic")
+	b.reflectPkg = b.NewImport("reflect")
+	b.timePkg = b.NewImport("time")
+	b.flagPkg = b.NewImport("flag")
 	// if !gogoproto.ImportsGoGoProto(file.FileDescriptorProto) {
 	// 	b.protoPkg = b.NewImport("github.com/golang/protobuf/proto")
 	// }
@@ -53,9 +59,9 @@ func (b *buildquery) Generate(file *generator.FileDescriptor) {
 	b.P(`if date, ok := vv.(*`, b.protoPkg.Use(), `.Date); ok {`)
 	b.P(`switch op {`)
 	b.P(`case "<":`)
-	b.P(`return `, b.protoPkg.Use(), `.DateUpperToTimeSearch(date).UnixNano() / int64(time.Millisecond)`)
+	b.P(`return `, b.protoPkg.Use(), `.DateUpperToTimeSearch(date).UnixNano() / int64(`, b.timePkg.Use(), `.Millisecond)`)
 	b.P(`default:`)
-	b.P(`return `, b.protoPkg.Use(), `.DateToTimeSearch(date).UnixNano() / int64(time.Millisecond)`)
+	b.P(`return `, b.protoPkg.Use(), `.DateToTimeSearch(date).UnixNano() / int64(`, b.timePkg.Use(), `.Millisecond)`)
 	b.P(`}`)
 	b.P(`}`)
 	b.P(`return vv`)
@@ -144,7 +150,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	ccTypeName := generator.CamelCaseSlice(message.TypeName())
 	b.P(`func (this *`, ccTypeName, `) BuildQuery() *`, b.elasticPkg.Use(), `.BoolQuery {`)
 	b.In()
-	b.P(`flag.Parse()`)
+	b.P(b.flagPkg.Use(), `.Parse()`)
 	b.P(`query := `, b.elasticPkg.Use(), `.NewBoolQuery()`)
 	b.In()
 	rangeDateSearchDeclar := func() {
@@ -167,16 +173,16 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 	}
 	b.P(`if !disableRangeFilter || searchPhone {`)
 	b.P(`for k, v := range rangeDateSearch.mapRangeDateSearch {`)
-	b.P(`glog.Infoln(k, v)`)
+	b.P(b.glogPkg.Use(), `.Infoln(k, v)`)
 	b.P(`f, t := v.from, v.to`)
 	b.P(`if f != nil && t != nil {`)
 	b.P(`if !searchPhone && bHasSearchPrefix && f.Day+7 > t.Day && f.Month == t.Month && f.Year == t.Year {`)
-	b.P(`tm := time.Date(int(f.Year), time.Month(f.Month), int(f.Day), 0, 0, 0, 0, time.UTC).Add(-7 * 24 * time.Hour)`)
+	b.P(`tm := `, b.timePkg.Use(), `.Date(int(f.Year), `, b.timePkg.Use(), `.Month(f.Month), int(f.Day), 0, 0, 0, 0, `, b.timePkg.Use(), `.UTC).Add(-7 * 24 * `, b.timePkg.Use(), `.Hour)`)
 	b.P(`f.Year, f.Month, f.Day = int32(tm.Year()), int32(tm.Month()), int32(tm.Day())`)
 	b.P(`}`)
 	b.P(`query = query.Filter(`, b.elasticPkg.Use(), `.NewRangeQuery(k).Gte(dateToStringSearch(f)).Lte(dateToStringSearch(t)).TimeZone("+07:00"))`)
 	b.P(`} else {`)
-	b.P(`glog.Errorln("Invalid ", k)`)
+	b.P(b.glogPkg.Use(), `.Errorln("Invalid ", k)`)
 	b.P(`}`)
 	b.P(`}`)
 	b.P(`}`)
@@ -243,10 +249,10 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`}`)
 	case "=": //Term
 		b.P(`if ` + variableName + `!= nil{`)
-		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
+		b.P(`if `+b.reflectPkg.Use()+`.TypeOf(`, variableName, `).Kind() == `+b.reflectPkg.Use()+`.Slice {`)
 		b.P(`query = query.Filter(`, b.elasticPkg.Use(), `.NewTermsQuery("`+params[0]+`",`+variableName+`))`)
 		b.P(`} else if isEnumAll(`, variableName, `) {`)
-		b.P(`glog.Infoln("` + params[0] + `", "Is enum all")`)
+		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`", "Is enum all")`)
 		b.P(`} else{`)
 		b.P(`comp := convertDateTimeSearch(` + variableName + `,"=")`)
 		b.P(`query = query.Filter(`, b.elasticPkg.Use(), `.NewTermQuery("`+params[0]+`",comp))`)
@@ -262,7 +268,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewMatchQuery("`+params[0]+`.search",`+variableName+`).MinimumShouldMatch("3<90%"))`)
 		b.P(`}`)
 	case ">=":
-		b.P(`glog.Infoln("` + params[0] + `",` + variableName + `)`)
+		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`",`+variableName+`)`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if ` + variableName + ` != nil {`)
 		b.P(`if !rangeDateSearch.addFrom("` + params[0] + `", ` + variableName + `) {`)
@@ -270,7 +276,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`}`)
 		b.P(`}`)
 	case "<=":
-		b.P(`glog.Infoln("` + params[0] + `",` + variableName + `)`)
+		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`",`+variableName+`)`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if ` + variableName + ` != nil {`)
 		b.P(`if !rangeDateSearch.addTo("` + params[0] + `", ` + variableName + `) {`)
@@ -278,7 +284,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`}`)
 		b.P(`}`)
 	case ">":
-		b.P(`glog.Infoln("` + params[0] + `",` + variableName + `)`)
+		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`",`+variableName+`)`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if ` + variableName + ` != nil {`)
 		b.P(`if !rangeDateSearch.addFrom("` + params[0] + `", ` + variableName + `) {`)
@@ -286,7 +292,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`}`)
 		b.P(`}`)
 	case "<":
-		b.P(`glog.Infoln("` + params[0] + `",` + variableName + `)`)
+		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`",`+variableName+`)`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if ` + variableName + ` != nil {`)
 		b.P(`if !rangeDateSearch.addTo("` + params[0] + `", ` + variableName + `) {`)
@@ -294,15 +300,15 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`}`)
 		b.P(`}`)
 	case "!=":
-		b.P(`glog.Infoln("` + params[0] + `",` + variableName + `)`)
-		b.P(`if reflect.TypeOf(`, variableName, `).Kind() == reflect.Slice {`)
+		b.P(b.glogPkg.Use(), `.Infoln("`+params[0]+`",`+variableName+`)`)
+		b.P(`if `, b.reflectPkg.Use(), `.TypeOf(`, variableName, `).Kind() == `, b.reflectPkg.Use(), `.Slice {`)
 		b.P(`query = query.MustNot(`, b.elasticPkg.Use(), `.NewTermsQuery("`+params[0]+`",`+variableName+`))`)
 		b.P(`} else {`)
 		b.P(`comp := convertDateTimeSearch(` + variableName + `,"!=")`)
 		b.P(`query = query.MustNot(`, b.elasticPkg.Use(), `.NewTermQuery("`+params[0]+`",comp))`)
 		b.P(`}`)
 	default:
-		b.P(`glog.Warningln("Unknow ", params[1])`)
+		b.P(b.glogPkg.Use(), `.Warningln("Unknow ", params[1])`)
 	}
 
 }
