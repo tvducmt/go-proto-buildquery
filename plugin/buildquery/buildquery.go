@@ -1,11 +1,13 @@
 package buildquery
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
+	"github.com/golang/glog"
 	querier "github.com/tvducmt/protoc-gen-buildquery/protobuf"
 )
 
@@ -192,7 +194,17 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`}`)
 
 	}
-	switch fv.GetQuery() {
+	tag := fv.GetQuery()
+	// b.P("fv.GetQuery()", fv.GetQuery())
+	// b.P(`params := strings.Split(tag , ",")`)
+	// b.P(`if len(params) != 2 {`)
+	// b.P(`glog.Warningln(, len( params ))`)
+	// b.P(`}`)
+	params := strings.Split(tag, ",")
+	if len(params) != 2 {
+		glog.Warningln(tag, len(params))
+	}
+	switch params[1] {
 	case "*%*":
 		b.P(`if ` + variableName + ` != ""{`)
 		b.P(`bHasSearchPrefix = true`)
