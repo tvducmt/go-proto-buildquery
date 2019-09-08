@@ -168,6 +168,7 @@ func (b *buildquery) generateProto3Message(file *generator.FileDescriptor, messa
 		}
 		fieldName := b.GetOneOfFieldName(message, field)
 		variableName := "this." + fieldName
+
 		// b.P(`fmt.Println("variableName", ` + variableName + `)`)
 		b.generateQuerier(once2, variableName, ccTypeName, fieldQeurier)
 	}
@@ -206,6 +207,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		glog.Warningln(tag, len(params))
 		return
 	}
+
 	switch params[1] {
 	case "*%*":
 		b.P(`if ` + variableName + ` != ""{`)
@@ -248,7 +250,8 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewWildcardQuery(`+params[0]+`, fmt.Sprintf("%v*", `+variableName+`)))`)
 		b.P(`}`)
 	case "=": //Term
-		b.P(`if ` + variableName + `!= nil{`)
+		b.P(`if !reflect.DeepEqual(` + variableName + `, zero) {`)
+		// b.P(`if ` + variableName + `!= nil{`)
 		b.P(`if `+b.reflectPkg.Use()+`.TypeOf(`, variableName, `).Kind() == `+b.reflectPkg.Use()+`.Slice {`)
 		b.P(`query = query.Filter(`, b.elasticPkg.Use(), `.NewTermsQuery("`+params[0]+`",`+variableName+`))`)
 		b.P(`} else if isEnumAll(`, variableName, `) {`)
