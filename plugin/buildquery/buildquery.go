@@ -254,28 +254,37 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`query = query.Must(elastic.NewMatchQuery("` + fieldName + `.search",` + variableName + `).MinimumShouldMatch("3<90%"))`)
 		b.P(`}`)
 	case ">=":
+
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`if ` + variableName + ` != nil {`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gte(` + variableName + `))`)
 		b.P(`}`)
+		b.P(`}`)
 	case "<=":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`if ` + variableName + ` != nil {`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Lte(` + variableName + `))`)
 		b.P(`}`)
+		b.P(`}`)
 	case ">":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
+		b.P(`if ` + variableName + ` != nil {`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if !rangeDateSearch.addFrom("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`query = query.Must(r.NewRangeQuery("` + fieldName + `").Gt(` + variableName + `))`)
 		b.P(`}`)
+		b.P(`}`)
 	case "<":
+		b.P(`if ` + variableName + ` != nil {`)
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
 		once.Do(rangeQueryDeclar)
 		b.P(`if !rangeDateSearch.addTo("` + fieldName + `", ` + variableName + `) {`)
 		b.P(`	query = query.Must(r.NewRangeQuery("` + fieldName + `").Lt(` + variableName + `))`)
+		b.P(`}`)
 		b.P(`}`)
 	case "!=":
 		b.P(`glog.Infoln("` + fieldName + `",` + variableName + `)`)
