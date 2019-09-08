@@ -220,6 +220,9 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 	switch params[1] {
 	case "*%*":
 		b.P(`if !checkNull( ` + variableName + `){`)
+
+		b.P(`fields := strings.Split("`, params[0], `", ";")`)
+		b.P(`if len(fields) < 2 {`)
 		b.P(`bHasSearchPrefix = true`)
 		b.P(`if !disableRangeFilter && len(fmt.Sprintf("%v",` + variableName + `)) >= 8 {`)
 		b.P(`disableRangeFilter = true`)
@@ -229,6 +232,15 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`}`)
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewMultiMatchQuery(`)
 		b.P(variableName + `, "` + params[0] + `.search", "` + params[0] + `.search_reverse").MaxExpansions(1024).Slop(2).Type("phrase_prefix"))`)
+		b.P(`} else {`)
+		b.P(`fieldsSearch := make([]string, 2*len(fields))`)
+		b.P(`for i, field := range fields {`)
+		b.P(`fieldsSearch[2*i] = field+ ".search"`)
+		b.P(`fieldsSearch[2*i+1] = field+".search_reverse"`)
+		b.P(`}`)
+		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewMultiMatchQuery(`)
+		b.P(variableName, `, fieldsSearch...).MaxExpansions(1024).Slop(2).Type("phrase_prefix"))`)
+		b.P(`}`)
 		b.P(`}`)
 	case "*%":
 		b.P(`if !checkNull( ` + variableName + `){`)
