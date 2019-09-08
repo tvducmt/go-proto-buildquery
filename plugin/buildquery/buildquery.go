@@ -250,6 +250,7 @@ func (b *buildquery) generateQuerier(once *sync.Once, variableName string, ccTyp
 		b.P(`query = query.Must(`, b.elasticPkg.Use(), `.NewWildcardQuery(`+params[0]+`, fmt.Sprintf("%v*", `+variableName+`)))`)
 		b.P(`}`)
 	case "=": //Term
+		b.P(`zero := reflect.Zero(v.Type()).Interface()`)
 		b.P(`if !reflect.DeepEqual(` + variableName + `, zero) {`)
 		// b.P(`if ` + variableName + `!= nil{`)
 		b.P(`if `+b.reflectPkg.Use()+`.TypeOf(`, variableName, `).Kind() == `+b.reflectPkg.Use()+`.Slice {`)
